@@ -14,5 +14,8 @@ put the model in `ComfyUI/models/upscale_models`
 
 ### pysssss settings
 
-custom tag list:
-`https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/tags.csv`
+
+custom tag list`v1`:
+```
+https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/tags.csv
+```
