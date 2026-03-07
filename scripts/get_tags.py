@@ -2,8 +2,7 @@ import requests
 import csv
 import time
 
-# Added &search[post_count]=10.. to filter for tags with 10 or more posts at the source
-base_url = 'https://danbooru.donmai.us/tags.json?limit=1000&search[hide_empty]=yes&search[is_deprecated]=no&search[order]=count&search[post_count]=10..'
+base_url = 'https://danbooru.donmai.us/tags.json?limit=1000&search[hide_empty]=yes&search[is_deprecated]=no&search[order]=count&search[post_count]=20..'
 
 csv_filename = 'tags.csv'
 
