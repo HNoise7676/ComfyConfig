@@ -2,13 +2,13 @@ import requests
 import csv
 import time
 
-base_url = 'https://danbooru.donmai.us/tags.json?limit=1000&search[hide_empty]=yes&search[is_deprecated]=no&search[order]=count&search[post_count]=20..'
+base_url = 'https://danbooru.donmai.us/tags.json?limit=1000&search[hide_empty]=yes&search[is_deprecated]=no&search[order]=count&search[post_count]=15..'
 
 csv_filename = 'tags.csv'
 
 with open(csv_filename, mode='w', newline='', encoding='utf-8') as file:
     writer = csv.writer(file)
-    writer.writerow(['name', 'post_count'])
+    writer.writerow(['name', 'post_count', 'HNoise7676'])
 
     # Loop through pages 1 to 1000
     for page in range(1, 1001):
