@@ -16,14 +16,14 @@ jobs:
 
       - name: Upload index.html to HF
         run: |
-          curl -X POST \
+          curl -i -X POST \
             -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}" \
             -F "file=@index.html" \
             "https://huggingface.co/api/spaces/HNoise7676/Prompt_Writer/upload/main/index.html"
 
       - name: Upload tags.csv to HF
         run: |
-          curl -X POST \
+          curl -i -X POST \
             -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}" \
             -F "file=@tags.csv" \
             "https://huggingface.co/api/spaces/HNoise7676/Prompt_Writer/upload/main/tags.csv"
