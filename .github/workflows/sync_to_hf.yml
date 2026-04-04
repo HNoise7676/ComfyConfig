@@ -1,0 +1,29 @@
+name: Sync to Hugging Face
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'tags.csv'
+  workflow_dispatch:
+
+jobs:
+  sync-files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Upload index.html to HF
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}" \
+            -F "file=@index.html" \
+            "https://huggingface.co/api/spaces/HNoise7676/Prompt_Writer/upload/main/index.html"
+
+      - name: Upload tags.csv to HF
+        run: |
+          curl -X POST \
+            -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}" \
+            -F "file=@tags.csv" \
+            "https://huggingface.co/api/spaces/HNoise7676/Prompt_Writer/upload/main/tags.csv"
