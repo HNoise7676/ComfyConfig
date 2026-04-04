@@ -24,22 +24,21 @@ jobs:
           git config --global user.email "bot@github.com"
           git config --global user.name "GitHub Action Bot"
           
-          # 2. Create a temporary folder to clone the HF Space
+          # 2. Create a temporary folder and force the branch name to 'main'
           mkdir hf_space
           cd hf_space
+          git init -b main
           
-          # 3. Initialize and pull the HF repo (just the history, no files yet to save time)
-          git init
+          # 3. Connect and Pull
           git remote add origin https://HNoise7676:$HF_TOKEN@huggingface.co/spaces/HNoise7676/Prompt_Writer
           git pull origin main --depth=1
 
-          # 4. Copy the new files from our GitHub repo into this folder
+          # 4. Copy the new files
           cp ../index.html .
           cp ../tags.csv .
 
           # 5. Commit and Push
           git add index.html tags.csv
-          # Only commit if there are changes to avoid errors
           if git diff-index --quiet HEAD; then
             echo "No changes to sync."
           else
