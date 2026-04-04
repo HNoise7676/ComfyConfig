@@ -7,13 +7,13 @@
   "theme_color": "#8F22FF",
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/HNoise7676/Midnight-Violet/refs/heads/master/assets/Violet%20icon.jpg",
-      "sizes": "1024x1024",
-      "type": "image/jpeg",
+      "src": "https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/themes/Violet%20logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://via.placeholder.com/512/8F22FF/8F22FF.png",
+      "src": "https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/themes/Violet%20logo.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
@@ -21,16 +21,16 @@
   ],
   "screenshots": [
     {
-      "src": "https://raw.githubusercontent.com/HNoise7676/Midnight-Violet/refs/heads/master/assets/Violet%20icon.jpg",
-      "sizes": "1024x1024",
-      "type": "image/jpeg",
+      "src": "https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/themes/Violet%20logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "form_factor": "wide",
       "label": "Desktop View"
     },
     {
-      "src": "https://raw.githubusercontent.com/HNoise7676/Midnight-Violet/refs/heads/master/assets/Violet%20icon.jpg",
-      "sizes": "1024x1024",
-      "type": "image/jpeg",
+      "src": "https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/themes/Violet%20logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "label": "Mobile View"
     }
   ]
