@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Violet's prompt writer</title>
+    <style>
+        :root {
+            --primary: #8F22FF;
+            --light: #C183FF;
+            --dark: #61259C;
+            --deep: #1e0633;
+            /* A softer, milky gradient for the card itself */
+            --card-grad: linear-gradient(145deg, rgba(60, 20, 100, 0.95), rgba(40, 10, 80, 0.98));
+            --radius: 24px;
+        }
+
+        body {
+            /* MAIN ANIMATED GRADIENT */
+            /* We set a large background size so we can move it around */
+            background: linear-gradient(-45deg, #2b0057, #4b1d80, #61259c, #1e0633);
+            background-size: 400% 400%;
+            /* 15s duration creates a very slow, smooth vibe */
+            animation: gradientShift 15s ease infinite;
+            background-attachment: fixed;
+
+            color: white;
+            font-family: 'Inter', system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px 20px;
+        }
+
+        /* Gradient Animation Keyframes */
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container { width: 100%; max-width: 700px; animation: fadeIn 0.6s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
+        h1 { font-weight: 300; font-size: 2.2rem; margin: 0; color: #fff; text-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        
+        .meta-info { font-size: 0.75rem; opacity: 0.8; text-align: right; line-height: 1.4; }
+
+        .btn-copy {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+            margin-bottom: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .btn-copy:hover { background: var(--light); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(143, 34, 255, 0.4); }
+
+        .editor-wrapper {
+            position: relative;
+            background: var(--card-grad);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.5);
+        }
+
+        .text-common {
+            width: 100%;
+            height: 350px;
+            margin: 0;
+            padding: 0;
+            font-size: 1.15rem;
+            line-height: 1.6;
+            font-family: 'Fira Code', 'Cascadia Code', monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: transparent;
+            border: none;
+            outline: none;
+            box-sizing: border-box;
+        }
+
+        #promptInput { position: relative; z-index: 2; color: #ffffff; caret-color: var(--light); }
+        #ghostText {
+            position: absolute;
+            top: 24px; left: 24px;
+            z-index: 1;
+            color: rgba(255, 255, 255, 0.25);
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* Solid, high-contrast drawer */
+        #suggestions {
+            position: absolute;
+            top: calc(100% + 12px);
+            left: 0; right: 0;
+            background-color: #1a052d !important;
+            opacity: 1 !important;
+            border-radius: 16px;
+            border: 2px solid var(--light);
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .suggestion-item {
+            background-color: #1a052d;
+            padding: 12px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            opacity: 0;
+            transform: translateY(8px);
+            animation: slideUp 0.2s forwards ease-out;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+        .suggestion-item:hover { background: var(--primary); }
+
+        .warning-footer {
+            margin-top: 25px;
+            font-size: 0.7rem;
+            text-align: center;
+            opacity: 0.6;
+            letter-spacing: 0.5px;
+            font-style: italic;
+        }
+
+        .tag-name { font-weight: 500; display: flex; align-items: center; gap: 10px;}
+        .tag-count { font-size: 0.8rem; color: var(--light); font-family: monospace; font-weight: bold; }
+        .tab-hint { font-size: 0.6rem; color: #fff; background: rgba(255,255,255,0.1); padding: 2px 5px; border: 1px solid var(--light); border-radius: 4px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>Violet's prompt writer</h1>
+            <div id="fileDate" class="meta-info">Syncing database...</div>
+        </div>
+        <div style="text-align: right;">
+            <button class="btn-copy" onclick="copyText()">Copy Prompt</button>
+            <div id="tagCountStatus" class="meta-info">HNoise7676-Ready</div>
+        </div>
+    </header>
+    
+    <div class="editor-wrapper">
+        <div id="ghostText" class="text-common"></div>
+        <textarea id="promptInput" class="text-common" placeholder="Start typing tags..."></textarea>
+        <div id="suggestions"></div>
+    </div>
+
+    <div class="warning-footer">
+        ⚠ Warning: This tool is mostly vibe-coded. Things may (and probably will) break.
+    </div>
+</div>
+
+<script>
+    const tagUrl = 'https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/tags.csv';
+    const promptInput = document.getElementById('promptInput');
+    const ghostText = document.getElementById('ghostText');
+    const suggestionsBox = document.getElementById('suggestions');
+    const tagCountStatus = document.getElementById('tagCountStatus');
+    const fileDateDisplay = document.getElementById('fileDate');
+    
+    let tagDatabase = [];
+
+    async function initialize() {
+        try {
+            const response = await fetch(tagUrl);
+            const csvData = await response.text();
+            const lines = csvData.split('\n').filter(l => l.trim().length > 0);
+            
+            if (lines.length > 0) {
+                const firstRowParts = lines[0].split(',');
+                if (firstRowParts[2]) {
+                    const dateString = firstRowParts[2].split('HNoise7676-')[1];
+                    fileDateDisplay.innerText = `Database Date: ${dateString || 'Unknown'}`;
+                }
+            }
+
+            tagDatabase = lines.map(line => {
+                const parts = line.split(',');
+                return {
+                    name: (parts[0] || '').trim().replace(/_/g, ' '),
+                    count: (parts[1] || '').trim()
+                };
+            });
+
+            tagCountStatus.innerText = `${tagDatabase.length.toLocaleString()} tags synced`;
+        } catch (err) {
+            tagCountStatus.innerText = "Sync Error";
+        }
+    }
+
+    function updateGhost() {
+        const value = promptInput.value;
+        const lastPart = value.split(',').pop().trimStart();
+
+        if (lastPart.length >= 2) {
+            const match = tagDatabase.find(t => t.name.toLowerCase().startsWith(lastPart.toLowerCase()));
+            if (match) {
+                const remaining = match.name.substring(lastPart.length);
+                ghostText.textContent = value + remaining;
+                return match.name;
+            }
+        }
+        ghostText.textContent = "";
+        return null;
+    }
+
+    promptInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            const lastPart = promptInput.value.split(',').pop().trim();
+            const bestMatch = tagDatabase.find(t => t.name.toLowerCase().startsWith(lastPart.toLowerCase()));
+            
+            if (bestMatch) {
+                e.preventDefault();
+                selectTag(bestMatch.name, lastPart);
+            }
+        }
+    });
+
+    promptInput.addEventListener('input', () => {
+        updateGhost();
+        const value = promptInput.value;
+        const lastPart = value.split(',').pop().trim();
+
+        if (lastPart.length < 2) {
+            suggestionsBox.style.display = 'none';
+            return;
+        }
+
+        const matches = tagDatabase
+            .filter(t => t.name.toLowerCase().includes(lastPart.toLowerCase()))
+            .slice(0, 10);
+            
+        renderSuggestions(matches, lastPart);
+    });
+
+    function renderSuggestions(matches, lastPart) {
+        if (matches.length === 0) { suggestionsBox.style.display = 'none'; return; }
+        suggestionsBox.innerHTML = '';
+        
+        matches.forEach((item, index) => {
+            const div = document.createElement('div');
+            div.className = 'suggestion-item';
+            div.style.animationDelay = `${index * 0.03}s`;
+            
+            div.innerHTML = `
+                <div class="tag-name">
+                    ${item.name}
+                    ${index === 0 ? '<span class="tab-hint">TAB</span>' : ''}
+                </div>
+                <div class="tag-count">${item.count}</div>
+            `;
+            
+            div.onclick = () => selectTag(item.name, lastPart);
+            suggestionsBox.appendChild(div);
+        });
+        suggestionsBox.style.display = 'block';
+    }
+
+    function selectTag(tag, lastPart) {
+        const content = promptInput.value;
+        const lastIndex = content.lastIndexOf(lastPart);
+        const escapedTag = tag.replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+        
+        promptInput.value = content.substring(0, lastIndex) + escapedTag + ", ";
+        ghostText.textContent = "";
+        suggestionsBox.style.display = 'none';
+        promptInput.focus();
+    }
+
+    function copyText() {
+        navigator.clipboard.writeText(promptInput.value);
+    }
+
+    promptInput.addEventListener('scroll', () => { ghostText.scrollTop = promptInput.scrollTop; });
+
+    initialize();
+</script>
+
+</body>
+</html>
