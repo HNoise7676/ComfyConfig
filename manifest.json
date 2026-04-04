@@ -10,7 +10,13 @@
       "src": "https://raw.githubusercontent.com/HNoise7676/Midnight-Violet/refs/heads/master/assets/Violet%20icon.jpg",
       "sizes": "1024x1024",
       "type": "image/jpeg",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "https://via.placeholder.com/512/8F22FF/8F22FF.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "screenshots": [
