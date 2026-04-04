@@ -8,37 +8,41 @@ on:
   workflow_dispatch:
 
 jobs:
-  sync-files:
+  sync-to-hf:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-      - name: Upload Files to HF
+      - name: Push to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
-          # Function to upload a file to HF via the Commit API
-          upload_to_hf() {
-            FILE=$1
-            CONTENT=$(base64 -w 0 $FILE)
-            
-            curl -i -X POST \
-              -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}" \
-              -H "Content-Type: application/json" \
-              -d "{
-                \"summary\": \"Sync $FILE from GitHub\",
-                \"operations\": [
-                  {
-                    \"action\": \"create\",
-                    \"path\": \"$FILE\",
-                    \"content\": \"$CONTENT\"
-                  }
-                ]
-              }" \
-              "https://huggingface.co/api/spaces/HNoise7676/Prompt_Writer/commit/main"
-          }
-
-          echo "Uploading index.html..."
-          upload_to_hf "index.html"
+          # 1. Setup git identity
+          git config --global user.email "bot@github.com"
+          git config --global user.name "GitHub Action Bot"
           
-          echo "Uploading tags.csv..."
-          upload_to_hf "tags.csv"
+          # 2. Create a temporary folder to clone the HF Space
+          mkdir hf_space
+          cd hf_space
+          
+          # 3. Initialize and pull the HF repo (just the history, no files yet to save time)
+          git init
+          git remote add origin https://HNoise7676:$HF_TOKEN@huggingface.co/spaces/HNoise7676/Prompt_Writer
+          git pull origin main --depth=1
+
+          # 4. Copy the new files from our GitHub repo into this folder
+          cp ../index.html .
+          cp ../tags.csv .
+
+          # 5. Commit and Push
+          git add index.html tags.csv
+          # Only commit if there are changes to avoid errors
+          if git diff-index --quiet HEAD; then
+            echo "No changes to sync."
+          else
+            git commit -m "Sync index.html and tags.csv from GitHub"
+            git push origin main
+          fi
