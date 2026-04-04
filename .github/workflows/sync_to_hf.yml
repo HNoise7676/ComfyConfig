@@ -14,16 +14,31 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Upload index.html to HF
+      - name: Upload Files to HF
         run: |
-          curl -i -X POST \
-            -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}" \
-            -F "file=@index.html" \
-            "https://huggingface.co/api/spaces/HNoise7676/Prompt_Writer/upload/main/index.html"
+          # Function to upload a file to HF via the Commit API
+          upload_to_hf() {
+            FILE=$1
+            CONTENT=$(base64 -w 0 $FILE)
+            
+            curl -i -X POST \
+              -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d "{
+                \"summary\": \"Sync $FILE from GitHub\",
+                \"operations\": [
+                  {
+                    \"action\": \"create\",
+                    \"path\": \"$FILE\",
+                    \"content\": \"$CONTENT\"
+                  }
+                ]
+              }" \
+              "https://huggingface.co/api/spaces/HNoise7676/Prompt_Writer/commit/main"
+          }
 
-      - name: Upload tags.csv to HF
-        run: |
-          curl -i -X POST \
-            -H "Authorization: Bearer ${{ secrets.HF_TOKEN }}" \
-            -F "file=@tags.csv" \
-            "https://huggingface.co/api/spaces/HNoise7676/Prompt_Writer/upload/main/tags.csv"
+          echo "Uploading index.html..."
+          upload_to_hf "index.html"
+          
+          echo "Uploading tags.csv..."
+          upload_to_hf "tags.csv"
