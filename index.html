@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
     <title>Violet's prompt writer</title>
     <style>
         :root {
@@ -10,30 +10,24 @@
             --light: #C183FF;
             --dark: #61259C;
             --deep: #1e0633;
-            /* A softer, milky gradient for the card itself */
             --card-grad: linear-gradient(145deg, rgba(60, 20, 100, 0.95), rgba(40, 10, 80, 0.98));
             --radius: 24px;
         }
 
         body {
-            /* MAIN ANIMATED GRADIENT */
-            /* We set a large background size so we can move it around */
             background: linear-gradient(-45deg, #2b0057, #4b1d80, #61259c, #1e0633);
             background-size: 400% 400%;
-            /* 15s duration creates a very slow, smooth vibe */
             animation: gradientShift 15s ease infinite;
             background-attachment: fixed;
-
             color: white;
             font-family: 'Inter', system-ui, sans-serif;
             display: flex;
             justify-content: center;
             min-height: 100vh;
             margin: 0;
-            padding: 40px 20px;
+            padding: 20px;
         }
 
-        /* Gradient Animation Keyframes */
         @keyframes gradientShift {
             0% { background-position: 0% 50%; }
             50% { background-position: 100% 50%; }
@@ -43,24 +37,35 @@
         .container { width: 100%; max-width: 700px; animation: fadeIn 0.6s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px; }
-        h1 { font-weight: 300; font-size: 2.2rem; margin: 0; color: #fff; text-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        header { 
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: end;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
         
-        .meta-info { font-size: 0.75rem; opacity: 0.8; text-align: right; line-height: 1.4; }
+        h1 { font-weight: 300; font-size: clamp(1.5rem, 5vw, 2.2rem); margin: 0; color: #fff; text-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        
+        .meta-info { font-size: 0.75rem; opacity: 0.8; line-height: 1.4; }
+        .right-header { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
 
-        .btn-copy {
+        .controls { display: flex; gap: 8px; }
+
+        .btn-copy, .btn-history {
             background: var(--primary);
             color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 10px 16px;
             border-radius: 12px;
             cursor: pointer;
             font-weight: 600;
             transition: 0.3s;
-            margin-bottom: 8px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            white-space: nowrap;
         }
-        .btn-copy:hover { background: var(--light); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(143, 34, 255, 0.4); }
+        .btn-history { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); }
+        .btn-copy:hover, .btn-history:hover { background: var(--light); transform: translateY(-2px); }
 
         .editor-wrapper {
             position: relative;
@@ -74,36 +79,38 @@
         .text-common {
             width: 100%;
             height: 350px;
-            margin: 0;
-            padding: 0;
-            font-size: 1.15rem;
+            font-size: 16px; 
             line-height: 1.6;
-            font-family: 'Fira Code', 'Cascadia Code', monospace;
+            font-family: 'Fira Code', monospace;
             white-space: pre-wrap;
             word-wrap: break-word;
             background: transparent;
             border: none;
             outline: none;
+            margin: 0;
+            padding: 0;
             box-sizing: border-box;
+            resize: none;
         }
 
         #promptInput { position: relative; z-index: 2; color: #ffffff; caret-color: var(--light); }
         #ghostText {
             position: absolute;
-            top: 24px; left: 24px;
+            top: 24px;
+            left: 24px;
             z-index: 1;
             color: rgba(255, 255, 255, 0.25);
             pointer-events: none;
             user-select: none;
+            width: calc(100% - 48px);
         }
 
-        /* Solid, high-contrast drawer */
+        /* DRAWER RESTORED */
         #suggestions {
             position: absolute;
             top: calc(100% + 12px);
             left: 0; right: 0;
-            background-color: #1a052d !important;
-            opacity: 1 !important;
+            background-color: #1a052d;
             border-radius: 16px;
             border: 2px solid var(--light);
             display: none;
@@ -114,32 +121,46 @@
         }
 
         .suggestion-item {
-            background-color: #1a052d;
             padding: 12px 20px;
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
             opacity: 0;
             transform: translateY(8px);
             animation: slideUp 0.2s forwards ease-out;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
         }
         @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
         .suggestion-item:hover { background: var(--primary); }
 
-        .warning-footer {
-            margin-top: 25px;
-            font-size: 0.7rem;
-            text-align: center;
-            opacity: 0.6;
-            letter-spacing: 0.5px;
-            font-style: italic;
+        #historyPanel {
+            display: none;
+            margin-top: 15px;
+            background: #1a052d;
+            border-radius: 16px;
+            padding: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            max-height: 200px;
+            overflow-y: auto;
         }
+        .history-item {
+            font-size: 0.8rem;
+            padding: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            opacity: 0.7;
+        }
+        .history-item:hover { opacity: 1; background: var(--primary); }
 
         .tag-name { font-weight: 500; display: flex; align-items: center; gap: 10px;}
-        .tag-count { font-size: 0.8rem; color: var(--light); font-family: monospace; font-weight: bold; }
+        .tag-count { font-size: 0.8rem; color: var(--light); font-weight: bold; }
         .tab-hint { font-size: 0.6rem; color: #fff; background: rgba(255,255,255,0.1); padding: 2px 5px; border: 1px solid var(--light); border-radius: 4px; }
+        
+        .warning-footer { margin-top: 25px; font-size: 0.7rem; text-align: center; opacity: 0.6; font-style: italic; }
     </style>
 </head>
 <body>
@@ -148,11 +169,14 @@
     <header>
         <div>
             <h1>Violet's prompt writer</h1>
-            <div id="fileDate" class="meta-info">Syncing database...</div>
+            <div id="fileDate" class="meta-info">Syncing...</div>
         </div>
-        <div style="text-align: right;">
-            <button class="btn-copy" onclick="copyText()">Copy Prompt</button>
-            <div id="tagCountStatus" class="meta-info">HNoise7676-Ready</div>
+        <div class="right-header">
+            <div class="controls">
+                <button class="btn-history" onclick="toggleHistory()">History</button>
+                <button id="copyBtn" class="btn-copy" onclick="copyText()">Copy</button>
+            </div>
+            <div id="tagCountStatus" class="meta-info">Ready</div>
         </div>
     </header>
     
@@ -162,9 +186,15 @@
         <div id="suggestions"></div>
     </div>
 
-    <div class="warning-footer">
-        ⚠ Warning: This tool is mostly vibe-coded. Things may (and probably will) break.
+    <div id="historyPanel">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span style="font-size:0.8rem; font-weight:bold;">Local History</span>
+            <span style="font-size:0.7rem; cursor:pointer; color:var(--light);" onclick="clearHistory()">Clear</span>
+        </div>
+        <div id="historyList"></div>
     </div>
+
+    <div class="warning-footer">⚠ Vibe-coded tool. Things may break.</div>
 </div>
 
 <script>
@@ -172,8 +202,8 @@
     const promptInput = document.getElementById('promptInput');
     const ghostText = document.getElementById('ghostText');
     const suggestionsBox = document.getElementById('suggestions');
-    const tagCountStatus = document.getElementById('tagCountStatus');
-    const fileDateDisplay = document.getElementById('fileDate');
+    const historyList = document.getElementById('historyList');
+    const historyPanel = document.getElementById('historyPanel');
     
     let tagDatabase = [];
 
@@ -184,90 +214,89 @@
             const lines = csvData.split('\n').filter(l => l.trim().length > 0);
             
             if (lines.length > 0) {
-                const firstRowParts = lines[0].split(',');
-                if (firstRowParts[2]) {
-                    const dateString = firstRowParts[2].split('HNoise7676-')[1];
-                    fileDateDisplay.innerText = `Database Date: ${dateString || 'Unknown'}`;
+                const parts = lines[0].split(',');
+                if (parts[2]) {
+                    document.getElementById('fileDate').innerText = `DB: ${parts[2].split('HNoise7676-')[1] || 'Live'}`;
                 }
             }
 
             tagDatabase = lines.map(line => {
                 const parts = line.split(',');
-                return {
-                    name: (parts[0] || '').trim().replace(/_/g, ' '),
-                    count: (parts[1] || '').trim()
-                };
+                return { name: (parts[0] || '').trim().replace(/_/g, ' '), count: (parts[1] || '').trim() };
             });
 
-            tagCountStatus.innerText = `${tagDatabase.length.toLocaleString()} tags synced`;
-        } catch (err) {
-            tagCountStatus.innerText = "Sync Error";
-        }
+            document.getElementById('tagCountStatus').innerText = `${tagDatabase.length.toLocaleString()} tags`;
+            loadHistory();
+        } catch (err) { document.getElementById('tagCountStatus').innerText = "Sync Error"; }
+    }
+
+    function saveToHistory(text) {
+        if (!text.trim()) return;
+        let history = JSON.parse(localStorage.getItem('v_hist') || '[]');
+        history = [text, ...history.filter(p => p !== text)].slice(0, 20);
+        localStorage.setItem('v_hist', JSON.stringify(history));
+        loadHistory();
+    }
+
+    function loadHistory() {
+        const history = JSON.parse(localStorage.getItem('v_hist') || '[]');
+        historyList.innerHTML = history.length ? '' : '<div style="font-size:0.7rem; opacity:0.5;">Empty</div>';
+        history.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.innerText = p;
+            div.onclick = () => { promptInput.value = p; updateGhost(); historyPanel.style.display='none'; };
+            historyList.appendChild(div);
+        });
+    }
+
+    function toggleHistory() {
+        historyPanel.style.display = historyPanel.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function clearHistory() {
+        localStorage.removeItem('v_hist');
+        loadHistory();
     }
 
     function updateGhost() {
         const value = promptInput.value;
         const lastPart = value.split(',').pop().trimStart();
-
         if (lastPart.length >= 2) {
             const match = tagDatabase.find(t => t.name.toLowerCase().startsWith(lastPart.toLowerCase()));
             if (match) {
-                const remaining = match.name.substring(lastPart.length);
-                ghostText.textContent = value + remaining;
-                return match.name;
+                ghostText.textContent = value + match.name.substring(lastPart.length);
+                return;
             }
         }
         ghostText.textContent = "";
-        return null;
     }
 
     promptInput.addEventListener('keydown', (e) => {
         if (e.key === 'Tab') {
             const lastPart = promptInput.value.split(',').pop().trim();
-            const bestMatch = tagDatabase.find(t => t.name.toLowerCase().startsWith(lastPart.toLowerCase()));
-            
-            if (bestMatch) {
-                e.preventDefault();
-                selectTag(bestMatch.name, lastPart);
-            }
+            const match = tagDatabase.find(t => t.name.toLowerCase().startsWith(lastPart.toLowerCase()));
+            if (match) { e.preventDefault(); selectTag(match.name, lastPart); }
         }
     });
 
     promptInput.addEventListener('input', () => {
         updateGhost();
-        const value = promptInput.value;
-        const lastPart = value.split(',').pop().trim();
-
-        if (lastPart.length < 2) {
-            suggestionsBox.style.display = 'none';
-            return;
-        }
-
-        const matches = tagDatabase
-            .filter(t => t.name.toLowerCase().includes(lastPart.toLowerCase()))
-            .slice(0, 10);
-            
+        const lastPart = promptInput.value.split(',').pop().trim();
+        if (lastPart.length < 2) { suggestionsBox.style.display = 'none'; return; }
+        const matches = tagDatabase.filter(t => t.name.toLowerCase().includes(lastPart.toLowerCase())).slice(0, 10);
         renderSuggestions(matches, lastPart);
     });
 
     function renderSuggestions(matches, lastPart) {
-        if (matches.length === 0) { suggestionsBox.style.display = 'none'; return; }
+        if (!matches.length) { suggestionsBox.style.display = 'none'; return; }
         suggestionsBox.innerHTML = '';
-        
-        matches.forEach((item, index) => {
+        matches.forEach((item, i) => {
             const div = document.createElement('div');
             div.className = 'suggestion-item';
-            div.style.animationDelay = `${index * 0.03}s`;
-            
-            div.innerHTML = `
-                <div class="tag-name">
-                    ${item.name}
-                    ${index === 0 ? '<span class="tab-hint">TAB</span>' : ''}
-                </div>
-                <div class="tag-count">${item.count}</div>
-            `;
-            
-            div.onclick = () => selectTag(item.name, lastPart);
+            div.style.animationDelay = `${i * 0.03}s`;
+            div.innerHTML = `<div class="tag-name">${item.name} ${i===0?'<span class="tab-hint">TAB</span>':''}</div><div class="tag-count">${item.count}</div>`;
+            div.onpointerdown = (e) => { e.preventDefault(); selectTag(item.name, lastPart); };
             suggestionsBox.appendChild(div);
         });
         suggestionsBox.style.display = 'block';
@@ -276,9 +305,7 @@
     function selectTag(tag, lastPart) {
         const content = promptInput.value;
         const lastIndex = content.lastIndexOf(lastPart);
-        const escapedTag = tag.replace(/\(/g, '\\(').replace(/\)/g, '\\)');
-        
-        promptInput.value = content.substring(0, lastIndex) + escapedTag + ", ";
+        promptInput.value = content.substring(0, lastIndex) + tag.replace(/\(/g, '\\(').replace(/\)/g, '\\)') + ", ";
         ghostText.textContent = "";
         suggestionsBox.style.display = 'none';
         promptInput.focus();
@@ -286,12 +313,17 @@
 
     function copyText() {
         navigator.clipboard.writeText(promptInput.value);
+        saveToHistory(promptInput.value);
+        const btn = document.getElementById('copyBtn');
+        btn.innerText = "Copied!";
+        setTimeout(() => btn.innerText = "Copy", 2000);
     }
 
-    promptInput.addEventListener('scroll', () => { ghostText.scrollTop = promptInput.scrollTop; });
-
+    promptInput.addEventListener('scroll', () => { 
+        ghostText.scrollTop = promptInput.scrollTop; 
+    });
+    
     initialize();
 </script>
-
 </body>
 </html>
