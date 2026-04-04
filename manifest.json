@@ -5,11 +5,12 @@
   "display": "standalone",
   "background_color": "#1e0633",
   "theme_color": "#8F22FF",
-  "icons": [
-    {
-      "src": "https://raw.githubusercontent.com/HNoise7676/Midnight-Violet/refs/heads/master/assets/Violet%20icon.jpg",
-      "sizes": "512x512",
-      "type": "image/jpeg"
-    }
-  ]
+"icons": [
+  {
+    "src": "https://raw.githubusercontent.com/HNoise7676/Midnight-Violet/refs/heads/master/assets/Violet%20icon.jpg",
+    "sizes": "512x512",
+    "type": "image/jpeg",
+    "purpose": "any maskable"
+  }
+]
 }
