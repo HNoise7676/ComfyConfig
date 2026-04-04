@@ -231,13 +231,6 @@
             const csvData = await response.text();
             const lines = csvData.split('\n').filter(l => l.trim().length > 0);
             
-            if (lines.length > 0) {
-                const parts = lines[0].split(',');
-                if (parts[2]) {
-                    document.getElementById('fileDate').innerText = `DB: ${parts[2].split('HNoise7676-')[1] || 'Live'}`;
-                }
-            }
-
             tagDatabase = lines.map(line => {
                 const parts = line.split(',');
                 return { name: (parts[0] || '').trim().replace(/_/g, ' '), count: (parts[1] || '').trim() };
@@ -246,6 +239,105 @@
             document.getElementById('tagCountStatus').innerText = `${tagDatabase.length.toLocaleString()} tags`;
             loadHistory();
         } catch (err) { document.getElementById('tagCountStatus').innerText = "Sync Error"; }
+    }
+
+    // Helper to get the word currently being typed at the cursor position
+    function getCurrentTagInfo() {
+        const pos = promptInput.selectionStart;
+        const text = promptInput.value;
+        const textBefore = text.substring(0, pos);
+        const parts = textBefore.split(',');
+        const currentTag = parts[parts.length - 1].trimStart();
+        return { tag: currentTag, index: textBefore.lastIndexOf(currentTag) };
+    }
+
+    function updateGhost() {
+        const { tag } = getCurrentTagInfo();
+        if (tag.length >= 2) {
+            const match = tagDatabase.find(t => t.name.toLowerCase().startsWith(tag.toLowerCase()));
+            if (match) {
+                // Ghost text only works effectively at the end of the input
+                if (promptInput.selectionStart === promptInput.value.length) {
+                    ghostText.textContent = promptInput.value + match.name.substring(tag.length);
+                    return;
+                }
+            }
+        }
+        ghostText.textContent = "";
+    }
+
+    promptInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+            const { tag } = getCurrentTagInfo();
+            const match = tagDatabase.find(t => t.name.toLowerCase().startsWith(tag.toLowerCase()));
+            if (match) { 
+                e.preventDefault(); 
+                selectTag(match.name, tag); 
+            }
+        }
+    });
+
+    // Combined handler for input and paste
+    function handleInput() {
+        updateGhost();
+        const { tag } = getCurrentTagInfo();
+        
+        if (tag.length < 2) { 
+            suggestionsBox.style.display = 'none'; 
+            return; 
+        }
+
+        const matches = tagDatabase
+            .filter(t => t.name.toLowerCase().includes(tag.toLowerCase()))
+            .slice(0, 10);
+            
+        renderSuggestions(matches, tag);
+    }
+
+    promptInput.addEventListener('input', handleInput);
+    
+    // Explicitly trigger on paste and click (to update suggestions if cursor moves)
+    promptInput.addEventListener('paste', () => setTimeout(handleInput, 0));
+    promptInput.addEventListener('click', handleInput);
+
+    function renderSuggestions(matches, lastPart) {
+        if (!matches.length) { suggestionsBox.style.display = 'none'; return; }
+        suggestionsBox.innerHTML = '';
+        matches.forEach((item, i) => {
+            const div = document.createElement('div');
+            div.className = 'suggestion-item';
+            div.style.animationDelay = `${i * 0.03}s`;
+            div.innerHTML = `<div class="tag-name">${item.name} ${i===0?'<span class="tab-hint">TAB</span>':''}</div><div class="tag-count">${item.count}</div>`;
+            div.onpointerdown = (e) => { e.preventDefault(); selectTag(item.name, lastPart); };
+            suggestionsBox.appendChild(div);
+        });
+        suggestionsBox.style.display = 'block';
+    }
+
+    function selectTag(tag, lastPart) {
+        const pos = promptInput.selectionStart;
+        const text = promptInput.value;
+        const before = text.substring(0, pos);
+        const after = text.substring(pos);
+        
+        const lastIndex = before.lastIndexOf(lastPart);
+        const newBefore = before.substring(0, lastIndex) + tag.replace(/\(/g, '\\(').replace(/\)/g, '\\)') + ", ";
+        
+        promptInput.value = newBefore + after;
+        promptInput.selectionStart = promptInput.selectionEnd = newBefore.length;
+        
+        ghostText.textContent = "";
+        suggestionsBox.style.display = 'none';
+        promptInput.focus();
+    }
+
+    // ... (rest of your history and copy functions remain the same)
+    function copyText() {
+        navigator.clipboard.writeText(promptInput.value);
+        saveToHistory(promptInput.value);
+        const btn = document.getElementById('copyBtn');
+        btn.innerText = "Copied!";
+        setTimeout(() => btn.innerText = "Copy", 2000);
     }
 
     function saveToHistory(text) {
@@ -263,7 +355,7 @@
             const div = document.createElement('div');
             div.className = 'history-item';
             div.innerText = p;
-            div.onclick = () => { promptInput.value = p; updateGhost(); historyPanel.style.display='none'; };
+            div.onclick = () => { promptInput.value = p; handleInput(); historyPanel.style.display='none'; };
             historyList.appendChild(div);
         });
     }
@@ -275,66 +367,6 @@
     function clearHistory() {
         localStorage.removeItem('v_hist');
         loadHistory();
-    }
-
-    function updateGhost() {
-        const value = promptInput.value;
-        const lastPart = value.split(',').pop().trimStart();
-        if (lastPart.length >= 2) {
-            const match = tagDatabase.find(t => t.name.toLowerCase().startsWith(lastPart.toLowerCase()));
-            if (match) {
-                ghostText.textContent = value + match.name.substring(lastPart.length);
-                return;
-            }
-        }
-        ghostText.textContent = "";
-    }
-
-    promptInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Tab') {
-            const lastPart = promptInput.value.split(',').pop().trim();
-            const match = tagDatabase.find(t => t.name.toLowerCase().startsWith(lastPart.toLowerCase()));
-            if (match) { e.preventDefault(); selectTag(match.name, lastPart); }
-        }
-    });
-
-    promptInput.addEventListener('input', () => {
-        updateGhost();
-        const lastPart = promptInput.value.split(',').pop().trim();
-        if (lastPart.length < 2) { suggestionsBox.style.display = 'none'; return; }
-        const matches = tagDatabase.filter(t => t.name.toLowerCase().includes(lastPart.toLowerCase())).slice(0, 10);
-        renderSuggestions(matches, lastPart);
-    });
-
-    function renderSuggestions(matches, lastPart) {
-        if (!matches.length) { suggestionsBox.style.display = 'none'; return; }
-        suggestionsBox.innerHTML = '';
-        matches.forEach((item, i) => {
-            const div = document.createElement('div');
-            div.className = 'suggestion-item';
-            div.style.animationDelay = `${i * 0.03}s`;
-            div.innerHTML = `<div class="tag-name">${item.name} ${i===0?'<span class="tab-hint">TAB</span>':''}</div><div class="tag-count">${item.count}</div>`;
-            div.onpointerdown = (e) => { e.preventDefault(); selectTag(item.name, lastPart); };
-            suggestionsBox.appendChild(div);
-        });
-        suggestionsBox.style.display = 'block';
-    }
-
-    function selectTag(tag, lastPart) {
-        const content = promptInput.value;
-        const lastIndex = content.lastIndexOf(lastPart);
-        promptInput.value = content.substring(0, lastIndex) + tag.replace(/\(/g, '\\(').replace(/\)/g, '\\)') + ", ";
-        ghostText.textContent = "";
-        suggestionsBox.style.display = 'none';
-        promptInput.focus();
-    }
-
-    function copyText() {
-        navigator.clipboard.writeText(promptInput.value);
-        saveToHistory(promptInput.value);
-        const btn = document.getElementById('copyBtn');
-        btn.innerText = "Copied!";
-        setTimeout(() => btn.innerText = "Copy", 2000);
     }
 
     promptInput.addEventListener('scroll', () => { 
