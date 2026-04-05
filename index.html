@@ -236,9 +236,17 @@
                 return { name: (parts[0] || '').trim().replace(/_/g, ' '), count: (parts[1] || '').trim() };
             });
 
+            // Update the "Syncing..." text to show it's done
+            document.getElementById('fileDate').innerText = `Synced: ${new Date().toLocaleDateString()}`;
+            
+            // Update the tag count
             document.getElementById('tagCountStatus').innerText = `${tagDatabase.length.toLocaleString()} tags`;
+            
             loadHistory();
-        } catch (err) { document.getElementById('tagCountStatus').innerText = "Sync Error"; }
+        } catch (err) { 
+            document.getElementById('fileDate').innerText = "Sync Failed";
+            document.getElementById('tagCountStatus').innerText = "Offline"; 
+        }
     }
 
     // Helper to get the word currently being typed at the cursor position
