@@ -123,7 +123,6 @@
             width: calc(100% - 48px);
         }
 
-        /* DRAWER RESTORED */
         #suggestions {
             position: absolute;
             top: calc(100% + 12px);
@@ -149,6 +148,13 @@
             transform: translateY(8px);
             animation: slideUp 0.2s forwards ease-out;
         }
+        
+        /* Highlight for arrow key selection */
+        .suggestion-item.active {
+            background: var(--primary);
+            border-left: 4px solid var(--light);
+        }
+
         @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
         .suggestion-item:hover { background: var(--primary); }
 
@@ -216,7 +222,7 @@
 </div>
 
 <script>
-    const tagUrl = 'https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/tags.csv';
+const tagUrl = 'https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/tags.csv';
     const promptInput = document.getElementById('promptInput');
     const ghostText = document.getElementById('ghostText');
     const suggestionsBox = document.getElementById('suggestions');
@@ -224,6 +230,7 @@
     const historyPanel = document.getElementById('historyPanel');
     
     let tagDatabase = [];
+    let selectedIndex = -1; 
 
     async function initialize() {
         try {
@@ -236,12 +243,8 @@
                 return { name: (parts[0] || '').trim().replace(/_/g, ' '), count: (parts[1] || '').trim() };
             });
 
-            // Update the "Syncing..." text to show it's done
             document.getElementById('fileDate').innerText = `DB: ${new Date().toLocaleDateString()}`;
-            
-            // Update the tag count
             document.getElementById('tagCountStatus').innerText = `${tagDatabase.length.toLocaleString()} tags`;
-            
             loadHistory();
         } catch (err) { 
             document.getElementById('fileDate').innerText = "Sync Failed";
@@ -249,7 +252,6 @@
         }
     }
 
-    // Helper to get the word currently being typed at the cursor position
     function getCurrentTagInfo() {
         const pos = promptInput.selectionStart;
         const text = promptInput.value;
@@ -259,12 +261,14 @@
         return { tag: currentTag, index: textBefore.lastIndexOf(currentTag) };
     }
 
-    function updateGhost() {
+    function updateGhost(forcedMatch = null) {
         const { tag } = getCurrentTagInfo();
         if (tag.length >= 2) {
-            const match = tagDatabase.find(t => t.name.toLowerCase().startsWith(tag.toLowerCase()));
+            // If we have a forced match (from arrow keys), use it. Otherwise, find the first start-match.
+            const match = forcedMatch || tagDatabase.find(t => t.name.toLowerCase().startsWith(tag.toLowerCase()));
+            
             if (match) {
-                // Ghost text only works effectively at the end of the input
+                // Ghost text only renders if cursor is at the end of the input to avoid visual overlap
                 if (promptInput.selectionStart === promptInput.value.length) {
                     ghostText.textContent = promptInput.value + match.name.substring(tag.length);
                     return;
@@ -275,7 +279,36 @@
     }
 
     promptInput.addEventListener('keydown', (e) => {
-        if (e.key === 'Tab') {
+        const items = suggestionsBox.querySelectorAll('.suggestion-item');
+        const isVisible = suggestionsBox.style.display === 'block';
+
+        if (isVisible && items.length > 0) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = (selectedIndex + 1) % items.length;
+                updateActiveSuggestion(items);
+            } 
+            else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+                updateActiveSuggestion(items);
+            } 
+            else if (e.key === 'Enter' || e.key === 'Tab') {
+                const { tag } = getCurrentTagInfo();
+                const targetIdx = (selectedIndex > -1) ? selectedIndex : 0;
+                const matchDiv = items[targetIdx];
+                
+                if (matchDiv) {
+                    e.preventDefault();
+                    const matchName = matchDiv.querySelector('.tag-name').childNodes[0].textContent.trim();
+                    selectTag(matchName, tag);
+                }
+            }
+            else if (e.key === 'Escape') {
+                suggestionsBox.style.display = 'none';
+                updateGhost(); 
+            }
+        } else if (e.key === 'Tab') {
             const { tag } = getCurrentTagInfo();
             const match = tagDatabase.find(t => t.name.toLowerCase().startsWith(tag.toLowerCase()));
             if (match) { 
@@ -285,13 +318,28 @@
         }
     });
 
-    // Combined handler for input and paste
+    function updateActiveSuggestion(items) {
+        items.forEach((item, index) => {
+            if (index === selectedIndex) {
+                item.classList.add('active');
+                item.scrollIntoView({ block: 'nearest' });
+                
+                // Update ghost text to match the arrow selection
+                const matchName = item.querySelector('.tag-name').childNodes[0].textContent.trim();
+                updateGhost({ name: matchName });
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }
+
     function handleInput() {
         updateGhost();
         const { tag } = getCurrentTagInfo();
         
         if (tag.length < 2) { 
             suggestionsBox.style.display = 'none'; 
+            selectedIndex = -1;
             return; 
         }
 
@@ -303,14 +351,18 @@
     }
 
     promptInput.addEventListener('input', handleInput);
-    
-    // Explicitly trigger on paste and click (to update suggestions if cursor moves)
     promptInput.addEventListener('paste', () => setTimeout(handleInput, 0));
     promptInput.addEventListener('click', handleInput);
 
     function renderSuggestions(matches, lastPart) {
-        if (!matches.length) { suggestionsBox.style.display = 'none'; return; }
+        if (!matches.length) { 
+            suggestionsBox.style.display = 'none'; 
+            selectedIndex = -1;
+            return; 
+        }
         suggestionsBox.innerHTML = '';
+        selectedIndex = -1; 
+        
         matches.forEach((item, i) => {
             const div = document.createElement('div');
             div.className = 'suggestion-item';
@@ -329,17 +381,24 @@
         const after = text.substring(pos);
         
         const lastIndex = before.lastIndexOf(lastPart);
-        const newBefore = before.substring(0, lastIndex) + tag.replace(/\(/g, '\\(').replace(/\)/g, '\\)') + ", ";
+        const formattedTag = tag.replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+        const newBefore = before.substring(0, lastIndex) + formattedTag + ", ";
         
         promptInput.value = newBefore + after;
-        promptInput.selectionStart = promptInput.selectionEnd = newBefore.length;
+        
+        // Ensure cursor is placed right after the new tag and comma
+        const newPos = newBefore.length;
+        promptInput.focus();
+        promptInput.setSelectionRange(newPos, newPos);
         
         ghostText.textContent = "";
         suggestionsBox.style.display = 'none';
-        promptInput.focus();
+        selectedIndex = -1;
+        
+        // Force a scroll sync in case the textarea expanded
+        ghostText.scrollTop = promptInput.scrollTop;
     }
 
-    // ... (rest of your history and copy functions remain the same)
     function copyText() {
         navigator.clipboard.writeText(promptInput.value);
         saveToHistory(promptInput.value);
