@@ -14,8 +14,14 @@ put the model in `ComfyUI/models/upscale_models`
 
 ### pysssss settings
 
-
 custom tag list`latest`:
+
 ```
 https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/tags.csv
 ```
+
+---
+
+## My own wip model:
+
+[HNoise7676/VioletIllustriousSDXL · Hugging Face](https://huggingface.co/HNoise7676/VioletIllustriousSDXL)
