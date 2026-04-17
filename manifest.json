@@ -4,7 +4,7 @@
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#1e0633",
-  "theme_color": "#8F22FF",
+  "theme_color": "#7F00FF",
   "icons": [
     {
       "src": "https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/themes/Violet%20logo.png",
