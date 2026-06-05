@@ -1,3 +1,9 @@
+# /// script
+# dependencies = [
+#   "requests",
+# ]
+# ///
+
 import requests
 import csv
 import time
@@ -10,6 +16,9 @@ csv_filename = 'tags.csv'
 # Get the current date and format it as Day-Month-Year (e.g., 10-3-2026)
 now = datetime.now()
 dynamic_header = f'HNoise7676-{now.day}-{now.month}-{now.year}'
+headers = {
+    'User-Agent': 'MyTagDownloader/1.0 (Language=Python/requests)'
+}
 
 with open(csv_filename, mode='w', newline='', encoding='utf-8') as file:
     writer = csv.writer(file)
@@ -21,8 +30,7 @@ with open(csv_filename, mode='w', newline='', encoding='utf-8') as file:
     for page in range(1, 1001):
         url = f'{base_url}&page={page}'
 
-        response = requests.get(url)
-
+        response = requests.get(url, headers=headers)
         if response.status_code == 200:
             data = response.json()
 
