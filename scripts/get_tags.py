@@ -7,13 +7,13 @@
 import requests
 import csv
 import time
-from datetime import datetime # Imported datetime to get the current date
+from datetime import datetime
 
-base_url = 'https://danbooru.donmai.us/tags.json?limit=1000&search[hide_empty]=yes&search[is_deprecated]=no&search[order]=count&search[post_count]=25..'
+base_url = 'https://danbooru.donmai.us/tags.json?limit=1000&search[hide_empty]=yes&search[is_deprecated]=no&search[order]=count&search[post_count]=1000..'
 
 csv_filename = 'tags.csv'
 
-# Get the current date and format it as Day-Month-Year (e.g., 10-3-2026)
+# Get the current date and format it as Day-Month-Year (e.g., 15-6-2026)
 now = datetime.now()
 dynamic_header = f'HNoise7676-{now.day}-{now.month}-{now.year}'
 headers = {
@@ -61,5 +61,15 @@ with open(csv_filename, mode='w', newline='', encoding='utf-8') as file:
         print(f'Page {page} processed.', flush=True)
         # 1-second delay to be polite to the API
         time.sleep(1)
+
+    manual_tags = [
+        ['succubus', 1],
+        ['incubus', 1]
+    ]
+    
+    print("Appending manual tags...", flush=True)
+    for manual_item in manual_tags:
+        writer.writerow(manual_item)
+    # ------------------------------------------
 
 print(f'Data has been written to {csv_filename}', flush=True)
