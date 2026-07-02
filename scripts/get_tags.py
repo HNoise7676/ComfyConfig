@@ -9,7 +9,7 @@ import csv
 import time
 from datetime import datetime
 
-base_url = 'https://danbooru.donmai.us/tags.json?limit=1000&search[hide_empty]=yes&search[is_deprecated]=no&search[order]=count&search[post_count]=1000..'
+base_url = 'https://danbooru.donmai.us/tags.json?limit=1000&search[hide_empty]=yes&search[is_deprecated]=no&search[order]=count&search[post_count]=500..&search[created_at]=<2026-04-23'
 
 csv_filename = 'tags.csv'
 
