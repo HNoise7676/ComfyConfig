@@ -22,14 +22,14 @@ put the model in `ComfyUI/models/upscale_models`
 
 ### pysssss settings
 
-custom tag list`latest`:
+custom tag list`BETA`:
 
 ```
-https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/tags.csv
+https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/MODERNTAGS/tags.csv
 ```
 
 ---
 
 ## My own model:
 
-[HNoise7676/VioletIllustriousSDXL · Hugging Face](https://huggingface.co/HNoise7676/VioletIllustriousSDXL)
+[HNoise7676/VioletIllustriousSDXL · Hugging Face](https://huggingface.co/HNoise7676/VioletIllustriousSDXL) (DOES NOT WORK WITH THE TAGS IN THE MODERNTAGS BRANCH)
