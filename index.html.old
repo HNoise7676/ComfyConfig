@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta property="og:title" content="Violet's Prompt Writer">
+<meta property="og:description" content="A easy way to write prompts for models like Violet Illustrious.">
+<meta property="og:image" content="https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/themes/Violet%20logo.png">
+<meta property="og:url" content="https://hnoise7676.github.io/ComfyConfig/">
+<meta property="og:type" content="website">
+
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Violet's Prompt Writer">
+<meta name="twitter:description" content="A easy way to write prompts for models like Violet Illustrious.">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/themes/Violet%20logo.png">
+<link rel="icon" type="image/png" href="https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/themes/Violet%20logo.png">
+<link rel="apple-touch-icon" href="https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/themes/Violet%20logo.png"><link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#8F22FF">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>Violet's prompt writer</title>
+    <style>
+        :root {
+            --primary: #8F22FF;
+            --light: #C183FF;
+            --dark: #61259C;
+            --deep: #1e0633;
+            --card-grad: linear-gradient(145deg, rgba(60, 20, 100, 0.95), rgba(40, 10, 80, 0.98));
+            --radius: 24px;
+        }
+
+        body {
+            background: linear-gradient(-45deg, #2b0057, #4b1d80, #61259c, #1e0633);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            background-attachment: fixed;
+            color: white;
+            font-family: 'Inter', system-ui, sans-serif;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .container { width: 100%; max-width: 700px; animation: fadeIn 0.6s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        header { 
+            display: grid;
+            grid-template-columns: 1fr auto;
+            align-items: end;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+        
+        h1 { font-weight: 300; font-size: clamp(1.5rem, 5vw, 2.2rem); margin: 0; color: #fff; text-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        
+        .meta-info { font-size: 0.75rem; opacity: 0.8; line-height: 1.4; }
+        .right-header { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+
+        .controls { display: flex; gap: 8px; }
+
+        .btn-copy, .btn-history {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            white-space: nowrap;
+        }
+        .btn-history { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1); }
+        .btn-copy:hover, .btn-history:hover { background: var(--light); transform: translateY(-2px); }
+
+        .editor-wrapper {
+            position: relative;
+            background: var(--card-grad);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.5);
+        }
+
+        .text-common {
+            width: 100%;
+            height: 350px;
+            font-size: 16px; 
+            line-height: 1.6;
+            font-family: 'Fira Code', monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: transparent;
+            border: none;
+            outline: none;
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            resize: none;
+        }
+
+        #promptInput { position: relative; z-index: 2; color: #ffffff; caret-color: var(--light); }
+        #ghostText {
+            position: absolute;
+            top: 24px;
+            left: 24px;
+            z-index: 1;
+            color: rgba(255, 255, 255, 0.25);
+            pointer-events: none;
+            user-select: none;
+            width: calc(100% - 48px);
+        }
+
+        #suggestions {
+            position: absolute;
+            top: calc(100% + 12px);
+            left: 0; right: 0;
+            background-color: #1a052d;
+            border-radius: 16px;
+            border: 2px solid var(--light);
+            display: none;
+            z-index: 1000;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .suggestion-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            opacity: 0;
+            transform: translateY(8px);
+            animation: slideUp 0.2s forwards ease-out;
+        }
+        
+        /* Highlight for arrow key selection */
+        .suggestion-item.active {
+            background: var(--primary);
+            border-left: 4px solid var(--light);
+        }
+
+        @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+        .suggestion-item:hover { background: var(--primary); }
+
+        #historyPanel {
+            display: none;
+            margin-top: 15px;
+            background: #1a052d;
+            border-radius: 16px;
+            padding: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .history-item {
+            font-size: 0.8rem;
+            padding: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            opacity: 0.7;
+        }
+        .history-item:hover { opacity: 1; background: var(--primary); }
+
+        .tag-name { font-weight: 500; display: flex; align-items: center; gap: 10px;}
+        .tag-count { font-size: 0.8rem; color: var(--light); font-weight: bold; }
+        .tab-hint { font-size: 0.6rem; color: #fff; background: rgba(255,255,255,0.1); padding: 2px 5px; border: 1px solid var(--light); border-radius: 4px; }
+        
+        .warning-footer { margin-top: 25px; font-size: 0.7rem; text-align: center; opacity: 0.6; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <div>
+            <h1>Violet's prompt writer</h1>
+            <div id="fileDate" class="meta-info">Syncing...</div>
+        </div>
+        <div class="right-header">
+            <div class="controls">
+                <button class="btn-history" onclick="toggleHistory()">History</button>
+                <button id="copyBtn" class="btn-copy" onclick="copyText()">Copy</button>
+            </div>
+            <div id="tagCountStatus" class="meta-info">Ready</div>
+        </div>
+    </header>
+    
+    <div class="editor-wrapper">
+        <div id="ghostText" class="text-common"></div>
+        <textarea id="promptInput" class="text-common" placeholder="Start typing tags..."></textarea>
+        <div id="suggestions"></div>
+    </div>
+
+    <div id="historyPanel">
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <span style="font-size:0.8rem; font-weight:bold;">Local History</span>
+            <span style="font-size:0.7rem; cursor:pointer; color:var(--light);" onclick="clearHistory()">Clear</span>
+        </div>
+        <div id="historyList"></div>
+    </div>
+
+    <div class="warning-footer">⚠ Vibe-coded tool. Things may break.</div>
+</div>
+
+<script>
+const tagUrl = 'https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/tags.csv';
+    const promptInput = document.getElementById('promptInput');
+    const ghostText = document.getElementById('ghostText');
+    const suggestionsBox = document.getElementById('suggestions');
+    const historyList = document.getElementById('historyList');
+    const historyPanel = document.getElementById('historyPanel');
+    
+    let tagDatabase = [];
+    let selectedIndex = -1; 
+
+    async function initialize() {
+        try {
+            const response = await fetch(tagUrl);
+            const csvData = await response.text();
+            const lines = csvData.split('\n').filter(l => l.trim().length > 0);
+            
+            tagDatabase = lines.map(line => {
+                const parts = line.split(',');
+                return { name: (parts[0] || '').trim().replace(/_/g, ' '), count: (parts[1] || '').trim() };
+            });
+
+            document.getElementById('fileDate').innerText = `DB: ${new Date().toLocaleDateString()}`;
+            document.getElementById('tagCountStatus').innerText = `${tagDatabase.length.toLocaleString()} tags`;
+            loadHistory();
+        } catch (err) { 
+            document.getElementById('fileDate').innerText = "Sync Failed";
+            document.getElementById('tagCountStatus').innerText = "Offline"; 
+        }
+    }
+
+    function getCurrentTagInfo() {
+        const pos = promptInput.selectionStart;
+        const text = promptInput.value;
+        const textBefore = text.substring(0, pos);
+        const parts = textBefore.split(',');
+        const currentTag = parts[parts.length - 1].trimStart();
+        return { tag: currentTag, index: textBefore.lastIndexOf(currentTag) };
+    }
+
+    function updateGhost(forcedMatch = null) {
+        const { tag } = getCurrentTagInfo();
+        if (tag.length >= 2) {
+            // If we have a forced match (from arrow keys), use it. Otherwise, find the first start-match.
+            const match = forcedMatch || tagDatabase.find(t => t.name.toLowerCase().startsWith(tag.toLowerCase()));
+            
+            if (match) {
+                // Ghost text only renders if cursor is at the end of the input to avoid visual overlap
+                if (promptInput.selectionStart === promptInput.value.length) {
+                    ghostText.textContent = promptInput.value + match.name.substring(tag.length);
+                    return;
+                }
+            }
+        }
+        ghostText.textContent = "";
+    }
+
+    promptInput.addEventListener('keydown', (e) => {
+        const items = suggestionsBox.querySelectorAll('.suggestion-item');
+        const isVisible = suggestionsBox.style.display === 'block';
+
+        if (isVisible && items.length > 0) {
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = (selectedIndex + 1) % items.length;
+                updateActiveSuggestion(items);
+            } 
+            else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+                updateActiveSuggestion(items);
+            } 
+            else if (e.key === 'Enter' || e.key === 'Tab') {
+                const { tag } = getCurrentTagInfo();
+                const targetIdx = (selectedIndex > -1) ? selectedIndex : 0;
+                const matchDiv = items[targetIdx];
+                
+                if (matchDiv) {
+                    e.preventDefault();
+                    const matchName = matchDiv.querySelector('.tag-name').childNodes[0].textContent.trim();
+                    selectTag(matchName, tag);
+                }
+            }
+            else if (e.key === 'Escape') {
+                suggestionsBox.style.display = 'none';
+                updateGhost(); 
+            }
+        } else if (e.key === 'Tab') {
+            const { tag } = getCurrentTagInfo();
+            const match = tagDatabase.find(t => t.name.toLowerCase().startsWith(tag.toLowerCase()));
+            if (match) { 
+                e.preventDefault(); 
+                selectTag(match.name, tag); 
+            }
+        }
+    });
+
+    function updateActiveSuggestion(items) {
+        items.forEach((item, index) => {
+            if (index === selectedIndex) {
+                item.classList.add('active');
+                item.scrollIntoView({ block: 'nearest' });
+                
+                // Update ghost text to match the arrow selection
+                const matchName = item.querySelector('.tag-name').childNodes[0].textContent.trim();
+                updateGhost({ name: matchName });
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }
+
+    function handleInput() {
+        updateGhost();
+        const { tag } = getCurrentTagInfo();
+        
+        if (tag.length < 2) { 
+            suggestionsBox.style.display = 'none'; 
+            selectedIndex = -1;
+            return; 
+        }
+
+        const matches = tagDatabase
+            .filter(t => t.name.toLowerCase().includes(tag.toLowerCase()))
+            .slice(0, 10);
+            
+        renderSuggestions(matches, tag);
+    }
+
+    promptInput.addEventListener('input', handleInput);
+    promptInput.addEventListener('paste', () => setTimeout(handleInput, 0));
+    promptInput.addEventListener('click', handleInput);
+
+    function renderSuggestions(matches, lastPart) {
+        if (!matches.length) { 
+            suggestionsBox.style.display = 'none'; 
+            selectedIndex = -1;
+            return; 
+        }
+        suggestionsBox.innerHTML = '';
+        selectedIndex = -1; 
+        
+        matches.forEach((item, i) => {
+            const div = document.createElement('div');
+            div.className = 'suggestion-item';
+            div.style.animationDelay = `${i * 0.03}s`;
+            div.innerHTML = `<div class="tag-name">${item.name} ${i===0?'<span class="tab-hint">TAB</span>':''}</div><div class="tag-count">${item.count}</div>`;
+            div.onpointerdown = (e) => { e.preventDefault(); selectTag(item.name, lastPart); };
+            suggestionsBox.appendChild(div);
+        });
+        suggestionsBox.style.display = 'block';
+    }
+
+    function selectTag(tag, lastPart) {
+        const pos = promptInput.selectionStart;
+        const text = promptInput.value;
+        const before = text.substring(0, pos);
+        const after = text.substring(pos);
+        
+        const lastIndex = before.lastIndexOf(lastPart);
+        const formattedTag = tag.replace(/\(/g, '\\(').replace(/\)/g, '\\)');
+        const newBefore = before.substring(0, lastIndex) + formattedTag + ", ";
+        
+        promptInput.value = newBefore + after;
+        
+        // Ensure cursor is placed right after the new tag and comma
+        const newPos = newBefore.length;
+        promptInput.focus();
+        promptInput.setSelectionRange(newPos, newPos);
+        
+        ghostText.textContent = "";
+        suggestionsBox.style.display = 'none';
+        selectedIndex = -1;
+        
+        // Force a scroll sync in case the textarea expanded
+        ghostText.scrollTop = promptInput.scrollTop;
+    }
+
+    function copyText() {
+        navigator.clipboard.writeText(promptInput.value);
+        saveToHistory(promptInput.value);
+        const btn = document.getElementById('copyBtn');
+        btn.innerText = "Copied!";
+        setTimeout(() => btn.innerText = "Copy", 2000);
+    }
+
+    function saveToHistory(text) {
+        if (!text.trim()) return;
+        let history = JSON.parse(localStorage.getItem('v_hist') || '[]');
+        history = [text, ...history.filter(p => p !== text)].slice(0, 20);
+        localStorage.setItem('v_hist', JSON.stringify(history));
+        loadHistory();
+    }
+
+    function loadHistory() {
+        const history = JSON.parse(localStorage.getItem('v_hist') || '[]');
+        historyList.innerHTML = history.length ? '' : '<div style="font-size:0.7rem; opacity:0.5;">Empty</div>';
+        history.forEach(p => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.innerText = p;
+            div.onclick = () => { promptInput.value = p; handleInput(); historyPanel.style.display='none'; };
+            historyList.appendChild(div);
+        });
+    }
+
+    function toggleHistory() {
+        historyPanel.style.display = historyPanel.style.display === 'block' ? 'none' : 'block';
+    }
+
+    function clearHistory() {
+        localStorage.removeItem('v_hist');
+        loadHistory();
+    }
+
+    promptInput.addEventListener('scroll', () => { 
+        ghostText.scrollTop = promptInput.scrollTop; 
+    });
+    
+    initialize();
+</script>
+</body>
+</html>
