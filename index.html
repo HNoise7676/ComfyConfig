@@ -112,16 +112,6 @@
         }
 
         #promptInput { position: relative; z-index: 2; color: #ffffff; caret-color: var(--light); }
-        #ghostText {
-            position: absolute;
-            top: 24px;
-            left: 24px;
-            z-index: 1;
-            color: rgba(255, 255, 255, 0.25);
-            pointer-events: none;
-            user-select: none;
-            width: calc(100% - 48px);
-        }
 
         #suggestions {
             position: absolute;
@@ -205,7 +195,6 @@
     </header>
     
     <div class="editor-wrapper">
-        <div id="ghostText" class="text-common"></div>
         <textarea id="promptInput" class="text-common" placeholder="Start typing tags..."></textarea>
         <div id="suggestions"></div>
     </div>
@@ -224,7 +213,6 @@
 <script>
 const tagUrl = 'https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/tags.csv';
     const promptInput = document.getElementById('promptInput');
-    const ghostText = document.getElementById('ghostText');
     const suggestionsBox = document.getElementById('suggestions');
     const historyList = document.getElementById('historyList');
     const historyPanel = document.getElementById('historyPanel');
@@ -261,23 +249,6 @@ const tagUrl = 'https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/he
         return { tag: currentTag, index: textBefore.lastIndexOf(currentTag) };
     }
 
-    function updateGhost(forcedMatch = null) {
-        const { tag } = getCurrentTagInfo();
-        if (tag.length >= 2) {
-            // If we have a forced match (from arrow keys), use it. Otherwise, find the first start-match.
-            const match = forcedMatch || tagDatabase.find(t => t.name.toLowerCase().startsWith(tag.toLowerCase()));
-            
-            if (match) {
-                // Ghost text only renders if cursor is at the end of the input to avoid visual overlap
-                if (promptInput.selectionStart === promptInput.value.length) {
-                    ghostText.textContent = promptInput.value + match.name.substring(tag.length);
-                    return;
-                }
-            }
-        }
-        ghostText.textContent = "";
-    }
-
     promptInput.addEventListener('keydown', (e) => {
         const items = suggestionsBox.querySelectorAll('.suggestion-item');
         const isVisible = suggestionsBox.style.display === 'block';
@@ -306,7 +277,6 @@ const tagUrl = 'https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/he
             }
             else if (e.key === 'Escape') {
                 suggestionsBox.style.display = 'none';
-                updateGhost(); 
             }
         } else if (e.key === 'Tab') {
             const { tag } = getCurrentTagInfo();
@@ -323,10 +293,6 @@ const tagUrl = 'https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/he
             if (index === selectedIndex) {
                 item.classList.add('active');
                 item.scrollIntoView({ block: 'nearest' });
-                
-                // Update ghost text to match the arrow selection
-                const matchName = item.querySelector('.tag-name').childNodes[0].textContent.trim();
-                updateGhost({ name: matchName });
             } else {
                 item.classList.remove('active');
             }
@@ -334,7 +300,6 @@ const tagUrl = 'https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/he
     }
 
     function handleInput() {
-        updateGhost();
         const { tag } = getCurrentTagInfo();
         
         if (tag.length < 2) { 
@@ -391,12 +356,8 @@ const tagUrl = 'https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/he
         promptInput.focus();
         promptInput.setSelectionRange(newPos, newPos);
         
-        ghostText.textContent = "";
         suggestionsBox.style.display = 'none';
         selectedIndex = -1;
-        
-        // Force a scroll sync in case the textarea expanded
-        ghostText.scrollTop = promptInput.scrollTop;
     }
 
     function copyText() {
@@ -435,10 +396,6 @@ const tagUrl = 'https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/he
         localStorage.removeItem('v_hist');
         loadHistory();
     }
-
-    promptInput.addEventListener('scroll', () => { 
-        ghostText.scrollTop = promptInput.scrollTop; 
-    });
     
     initialize();
 </script>
