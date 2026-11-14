@@ -1,37 +1,37 @@
 {
+  "id": "./",
   "name": "Violet's Prompt Writer",
-  "short_name": "PromptWriter",
-  "start_url": "index.html",
+  "short_name": "Violet Prompt",
+  "description": "An AI-written, work-in-progress prompt writer with popularity-ranked tag autocomplete, favorites, history and prompt checks.",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
-  "background_color": "#1e0633",
-  "theme_color": "#7F00FF",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#100c16",
+  "theme_color": "#100c16",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["productivity", "utilities", "graphics"],
+  "prefer_related_applications": false,
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/themes/Violet%20logo.png",
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/themes/Violet%20logo.png",
+      "src": "./icon-maskable-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/themes/Violet%20logo.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Desktop View"
-    },
-    {
-      "src": "https://raw.githubusercontent.com/HNoise7676/ComfyConfig/refs/heads/main/themes/Violet%20logo.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "label": "Mobile View"
     }
   ]
 }
