@@ -36,6 +36,11 @@ jobs:
           # 4. Copy the new files
           cp ../index.html .
           cp ../tags.csv .
+          cp ../sw.js .
+          cp ../manifest.json .
+          cp ../icon-maskable-512.png .
+          cp ../icon-512.png .
+          cp ../icon-192.png .
 
           # 5. Commit and Push
           git add index.html tags.csv
