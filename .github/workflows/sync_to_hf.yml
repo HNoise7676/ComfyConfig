@@ -43,7 +43,7 @@ jobs:
           cp ../icon-192.png .
 
           # 5. Commit and Push
-          git add index.html tags.csv
+          git add index.html tags.csv sw.js manifest.json icon-maskable-512.png icon-512.png icon-192.png
           if git diff-index --quiet HEAD; then
             echo "No changes to sync."
           else
